@@ -20,7 +20,7 @@ public class StoreController {
     @Autowired
     private StoreService storeService;
 
-    @PostMapping
+    @PostMapping("store")
     public ResponseEntity<StoreResponse> addStore(@RequestBody StoreRequest request , Authentication authentication){
         StoreResponse response=storeService.addStore(request , authentication);
         return new ResponseEntity<>(response , HttpStatus.CREATED);

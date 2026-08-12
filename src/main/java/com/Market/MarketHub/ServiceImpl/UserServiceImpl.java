@@ -8,6 +8,7 @@ import com.Market.MarketHub.Model.User;
 import com.Market.MarketHub.Repository.UserRepository;
 import com.Market.MarketHub.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,8 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    Authentication authentication;
 
     @Override
     public UserResponse createUser(UserRequest request) {
@@ -34,7 +37,19 @@ public class UserServiceImpl implements UserService {
 
         return mapToResponse(savedUser);
     }
-
+//
+//    @Override
+//    public UserResponse updateUserRole(Role role) {
+//        String username=authentication.getName();
+//        User user=userRepository.findByUsername(username).orElseThrow(()->
+//                new UsernameNotFoundException("user not found"));
+//
+//        user.setRole(role);
+//
+//        User updatedUser=userRepository.save(user);
+//
+//        return mapToResponse(updatedUser);
+//    }
 
 
     public UserResponse mapToResponse(User user){
