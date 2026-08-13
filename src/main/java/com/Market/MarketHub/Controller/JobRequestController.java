@@ -1,8 +1,6 @@
 package com.Market.MarketHub.Controller;
 
-import com.Market.MarketHub.Dto.CustomerJobRequestResponseDto;
-import com.Market.MarketHub.Dto.JobRequestDto;
-import com.Market.MarketHub.Dto.JobResponseDto;
+import com.Market.MarketHub.Dto.*;
 import com.Market.MarketHub.Service.JobRequestService;
 import org.apache.catalina.LifecycleState;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +38,12 @@ public class JobRequestController {
         JobResponseDto responseDto=jobRequestService.sendResponse(requestId ,status, authentication);
         return new ResponseEntity<>(responseDto , HttpStatus.CREATED);
 
+    }
 
+    @PostMapping("/approve/{requestId}")
+    public ResponseEntity<EmployeeResponse> approveJobRequest(@PathVariable Long requestId , Authentication authentication){
+        EmployeeResponse response=jobRequestService.approveJobRequest(requestId, authentication);
+        return new ResponseEntity<>(response , HttpStatus.CREATED);
     }
 
 }

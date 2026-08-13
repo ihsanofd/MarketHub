@@ -4,5 +4,6 @@ public enum JobRequestStatus {
     PENDING,
     ACCEPTED,
     REJECTED,
-    CANCELLED
+    CANCELLED,
+    APPROVED
 }

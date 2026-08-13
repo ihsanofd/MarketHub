@@ -1,6 +1,7 @@
 package com.Market.MarketHub.Model;
 
 
+import com.Market.MarketHub.Enum.EmployeePosition;
 import com.Market.MarketHub.Enum.JobRequestStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -32,7 +33,9 @@ public class JobRequest {
     @Enumerated(EnumType.STRING)
     private JobRequestStatus status;
 
-    private String position;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EmployeePosition position;
 
     @Column(nullable = false , updatable = false)
     private LocalDateTime createdAt;

@@ -1,19 +1,24 @@
 package com.Market.MarketHub.ServiceImpl;
 
-import com.Market.MarketHub.Dto.CustomerJobRequestResponseDto;
-import com.Market.MarketHub.Dto.JobRequestDto;
-import com.Market.MarketHub.Dto.JobResponseDto;
+import com.Market.MarketHub.Dto.*;
+import com.Market.MarketHub.Enum.EmployeeStatus;
 import com.Market.MarketHub.Enum.JobRequestStatus;
+import com.Market.MarketHub.Enum.Role;
+import com.Market.MarketHub.Enum.UserStatus;
 import com.Market.MarketHub.Exception.JobRequestNotFoundException;
 import com.Market.MarketHub.Exception.StoreNotFoundException;
 import com.Market.MarketHub.Model.JobRequest;
 import com.Market.MarketHub.Model.Store;
+import com.Market.MarketHub.Model.StoreEmployee;
 import com.Market.MarketHub.Model.User;
+import com.Market.MarketHub.Repository.EmployeeRepository;
 import com.Market.MarketHub.Repository.JobRequestRepository;
 import com.Market.MarketHub.Repository.StoreRepository;
 import com.Market.MarketHub.Repository.UserRepository;
 import com.Market.MarketHub.Service.JobRequestService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -32,6 +37,8 @@ public class JobRequestServiceImpl implements JobRequestService {
     private StoreRepository storeRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
 
     @Override
@@ -43,6 +50,26 @@ public class JobRequestServiceImpl implements JobRequestService {
 
         User customer=userRepository.findById(request.getCustomerId()).orElseThrow(
                 ()->new UsernameNotFoundException("Sorry, the user does not exist"));
+
+        if (customer.getRole() != Role.CUSTOMER){
+            throw new IllegalArgumentException("the user is not customer");
+        }
+
+        if (customer.getUserStatus() != UserStatus.ACTIVE) {
+            throw new IllegalArgumentException(
+                    "Only active customers can receive job invitations"
+            );
+        }
+
+        if (jobRequestRepository.existsByUserIdAndStoreIdAndStatus(
+                customer.getId(),
+                store.getId(),
+                JobRequestStatus.PENDING)) {
+
+            throw new IllegalArgumentException(
+                    "A pending invitation already exists for this customer"
+            );
+        }
 
         JobRequest jobRequest=new JobRequest();
         jobRequest.setUser(customer);
@@ -83,6 +110,10 @@ public class JobRequestServiceImpl implements JobRequestService {
         JobRequest jobRequest=jobRequestRepository.findById(requestId)
                 .orElseThrow(()->new JobRequestNotFoundException("JobRequest does not exist"));
 
+        if(!jobRequest.getUser().getUsername().equals(authentication.getName())) {
+            throw new AccessDeniedException("You can't respond to this request");
+        }
+
         if (jobRequest.getStatus() != JobRequestStatus.PENDING){
             throw new IllegalStateException("This invitation has already been responded to");
         }
@@ -101,6 +132,60 @@ public class JobRequestServiceImpl implements JobRequestService {
 
 
 
+    @Override
+    @Transactional
+    public EmployeeResponse approveJobRequest(Long requestId, Authentication authentication) {
+
+        JobRequest jobRequest=jobRequestRepository.findById(requestId)
+                .orElseThrow(()->new JobRequestNotFoundException("Job request not found"));
+
+        String owner=authentication.getName();
+        Store store=storeRepository.findByOwner_Username(owner).orElseThrow(
+                ()->new IllegalArgumentException("Only Store_Owner can approve accepted request."));
+
+
+        if (!jobRequest.getStore().getId().equals(store.getId())) {
+            throw new AccessDeniedException(
+                    "You cannot approve a request for another store"
+            );
+        }
+
+        if (jobRequest.getStatus()!= JobRequestStatus.ACCEPTED){
+            throw new IllegalArgumentException("only accepted request can be approve");
+        }
+        User user=jobRequest.getUser();
+
+        if (employeeRepository.existsByUserId(user.getId())) {
+            throw new IllegalArgumentException("User is already an employee");
+        }
+
+        if(user.getUserStatus() != UserStatus.ACTIVE){
+            throw new IllegalArgumentException("Customer account is not active");
+        }
+
+        if (user.getRole() != Role.CUSTOMER){
+            throw new IllegalArgumentException("only customer request can be approve");
+        }
+
+        user.setRole(Role.EMPLOYEE);
+        userRepository.save(user);
+        jobRequest.setStatus(JobRequestStatus.APPROVED);
+        jobRequestRepository.save(jobRequest);
+
+        StoreEmployee employee=new StoreEmployee();
+
+        employee.setUser(user);
+        employee.setStore(store);
+        employee.setPosition(jobRequest.getPosition());
+        employee.setStatus(EmployeeStatus.ACTIVE);
+        StoreEmployee saved=employeeRepository.save(employee);
+
+        return employeeResponse(saved);
+
+    }
+
+
+
 
     public JobResponseDto jobResponse(JobRequest request){
 
@@ -111,6 +196,17 @@ public class JobRequestServiceImpl implements JobRequestService {
         dto.setStatus(request.getStatus().name());
 
         return dto;
+    }
+
+    public EmployeeResponse employeeResponse(StoreEmployee employee){
+        EmployeeResponse response=new EmployeeResponse();
+        response.setId(employee.getId());
+        response.setUsername(employee.getUser().getUsername());
+        response.setStoreName(employee.getStore().getStoreName());
+        response.setPosition(employee.getPosition());
+        response.setStatus(employee.getStatus());
+
+        return response;
     }
 
 }

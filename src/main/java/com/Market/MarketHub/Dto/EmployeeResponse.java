@@ -1,7 +1,8 @@
 package com.Market.MarketHub.Dto;
 
 import com.Market.MarketHub.Enum.EmployeePosition;
-import jakarta.validation.constraints.NotNull;
+import com.Market.MarketHub.Enum.EmployeeStatus;
+import com.Market.MarketHub.Enum.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,10 +12,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class JobRequestDto {
+public class EmployeeResponse {
 
-    private Integer customerId;
-    @NotNull(message = "Position is required")
+    private Long id;
+    private String username;
+    private String storeName;
     private EmployeePosition position;
-
+    private EmployeeStatus status;
 }

@@ -1,6 +1,5 @@
 package com.Market.MarketHub.Dto;
 
-import com.Market.MarketHub.Enum.EmployeePosition;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,11 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class JobResponseDto {
+public class EmployeeRequest {
 
-    private Long id;
-    private String storeName;
-    private EmployeePosition position;
-    private String status;
-
+    private Integer userId;
 }
